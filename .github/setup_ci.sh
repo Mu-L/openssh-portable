@@ -10,7 +10,7 @@ case "$host" in
 *cygwin)
 	PACKAGER=setup
 	echo Setting CYGWIN system environment variable.
-	setx CYGWIN "binmode"
+	setx CYGWIN "winsymlinks:native"
 	echo Removing extended ACLs so umask works as expected.
 	set -x
 	setfacl -b . regress
@@ -192,7 +192,8 @@ while [ ! -z "$PACKAGES" ] && [ "$tries" -gt "0" ]; do
 	fi
 	;;
     setup)
-	if /cygdrive/c/setup.exe -q -P `echo "$PACKAGES" | tr ' ' ,`; then
+	setup="/cygdrive/$(echo "${CYGWIN_SETUP}" | tr -d : | tr '\' '/')"
+	if "${setup}" -q -P `echo "$PACKAGES" | tr ' ' ,`; then
 		PACKAGES=""
 	fi
 	;;
@@ -248,7 +249,7 @@ if [ ! -z "${INSTALL_BORINGSSL}" ]; then
      cd ${HOME}/boringssl && mkdir build && cd build &&
      cmake -GNinja  -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. && ninja &&
      mkdir -p /opt/boringssl/lib &&
-     cp ${HOME}/boringssl/build/crypto/libcrypto.a /opt/boringssl/lib &&
+     cp ${HOME}/boringssl/build/libcrypto.a /opt/boringssl/lib &&
      cp -r ${HOME}/boringssl/include /opt/boringssl)
 fi
 
