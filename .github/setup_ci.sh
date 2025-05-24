@@ -1,8 +1,17 @@
 #!/bin/sh
 
+config="$1"
+target="$2"
+
 PACKAGES=""
 
- . .github/configs $@
+echo Running as:
+id
+
+echo Environment:
+set
+
+ . .github/configs ${config}
 
 host=`./config.guess`
 echo "config.guess: $host"
@@ -10,12 +19,12 @@ case "$host" in
 *cygwin)
 	PACKAGER=setup
 	echo Setting CYGWIN system environment variable.
-	setx CYGWIN "binmode"
+	setx CYGWIN "winsymlinks:native"
 	echo Removing extended ACLs so umask works as expected.
 	set -x
 	setfacl -b . regress
 	icacls regress /c /t /q /Inheritance:d
-	icacls regress /c /t /q /Grant ${LOGNAME}:F
+	icacls regress /c /t /q /Grant ${USERNAME}:F
 	icacls regress /c /t /q /Remove:g "Authenticated Users" \
 	     BUILTIN\\Administrators BUILTIN Everyone System Users
 	takeown /F regress
@@ -32,7 +41,7 @@ case "$host" in
 	PACKAGER=apt
 esac
 
-TARGETS=$@
+TARGETS=${config}
 
 INSTALL_FIDO_PPA="no"
 export DEBIAN_FRONTEND=noninteractive
@@ -192,7 +201,8 @@ while [ ! -z "$PACKAGES" ] && [ "$tries" -gt "0" ]; do
 	fi
 	;;
     setup)
-	if /cygdrive/c/setup.exe -q -P `echo "$PACKAGES" | tr ' ' ,`; then
+	setup="/cygdrive/$(echo "${CYGWIN_SETUP}" | tr -d : | tr '\' '/')"
+	if "${setup}" -q -P `echo "$PACKAGES" | tr ' ' ,`; then
 		PACKAGES=""
 	fi
 	;;
@@ -248,7 +258,7 @@ if [ ! -z "${INSTALL_BORINGSSL}" ]; then
      cd ${HOME}/boringssl && mkdir build && cd build &&
      cmake -GNinja  -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. && ninja &&
      mkdir -p /opt/boringssl/lib &&
-     cp ${HOME}/boringssl/build/crypto/libcrypto.a /opt/boringssl/lib &&
+     cp ${HOME}/boringssl/build/libcrypto.a /opt/boringssl/lib &&
      cp -r ${HOME}/boringssl/include /opt/boringssl)
 fi
 
@@ -288,3 +298,13 @@ if [ ! -z "${INSTALL_PUTTY}" ]; then
     )
     /usr/local/bin/plink -V
 fi
+
+# This is the github "target" as specificed in the yml file.
+case "${target}" in
+ubuntu-latest)
+	echo ubuntu-latest target: setting random password string.
+	pw=$(openssl rand -base64 9)
+	sudo usermod --password "${pw}" runner
+	sudo usermod --unlock runner
+	;;
+esac

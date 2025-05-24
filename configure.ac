@@ -1700,6 +1700,12 @@ AC_RUN_IFELSE(
 	]
 )
 
+AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [[
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+]])
+
 AC_MSG_CHECKING([for /proc/pid/fd directory])
 if test -d "/proc/$$/fd" ; then
 	AC_DEFINE([HAVE_PROC_PID], [1], [Define if you have /proc/$pid/fd])
@@ -2004,6 +2010,7 @@ AC_CHECK_FUNCS([ \
 	fnmatch \
 	freeaddrinfo \
 	freezero \
+	fstatat \
 	fstatfs \
 	fstatvfs \
 	futimes \
@@ -2099,6 +2106,7 @@ AC_CHECK_FUNCS([ \
 	timegm \
 	timingsafe_bcmp \
 	truncate \
+	unlinkat \
 	unsetenv \
 	updwtmpx \
 	utimensat \
@@ -3076,7 +3084,6 @@ if test "x$openssl" = "xyes" ; then
 	AC_CHECK_FUNCS([ \
 		BN_is_prime_ex \
 		DES_crypt \
-		DSA_generate_parameters_ex \
 		EVP_DigestSign \
 		EVP_DigestVerify \
 		EVP_DigestFinal_ex \
@@ -3100,6 +3107,10 @@ if test "x$openssl" = "xyes" ; then
 
 	# LibreSSL/OpenSSL API differences
 	AC_CHECK_FUNCS([ \
+		EC_POINT_get_affine_coordinates \
+		EC_POINT_get_affine_coordinates_GFp \
+		EC_POINT_set_affine_coordinates \
+		EC_POINT_set_affine_coordinates_GFp \
 		EVP_CIPHER_CTX_iv \
 		EVP_CIPHER_CTX_iv_noconst \
 		EVP_CIPHER_CTX_get_iv \
